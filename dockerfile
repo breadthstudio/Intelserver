@@ -1,43 +1,19 @@
-# 指定基于的基础镜像
-FROM ubuntu:13.10  
-
-# 维护者信息
-MAINTAINER zhangjiayang "daitechlab@outlook.com"  
-  
-# 镜像的指令操作
-# 获取APT更新的资源列表
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe"> /etc/apt/sources.list
-# 更新软件
-RUN apt-get update  
-  
-# Install curl  
-RUN apt-get -y install curl  
-  
-# Install JDK 7  
-RUN cd /tmp &&  curl -L 'http://download.oracle.com/otn-pub/java/jdk/7u65-b17/jdk-7u65-linux-x64.tar.gz' -H 'Cookie: oraclelicense=accept-securebackup-cookie; gpw_e24=Dockerfile' | tar -xz  
-RUN mkdir -p /usr/lib/jvm  
-RUN mv /tmp/jdk1.7.0_65/ /usr/lib/jvm/java-7-oracle/  
-  
-# Set Oracle JDK 7 as default Java  
-RUN update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-7-oracle/bin/java 300     
-RUN update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-7-oracle/bin/javac 300     
-
-# 设置系统环境
-ENV JAVA_HOME /usr/lib/jvm/java-7-oracle/  
-  
-# Install tomcat7  
-RUN cd /tmp && curl -L 'http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.8/bin/apache-tomcat-7.0.8.tar.gz' | tar -xz  
-RUN mv /tmp/apache-tomcat-7.0.8/ /opt/tomcat7/  
-  
-ENV CATALINA_HOME /opt/tomcat7  
-ENV PATH $PATH:$CATALINA_HOME/bin  
-
-# 复件tomcat7.sh到容器中的目录 
-ADD tomcat7.sh /etc/init.d/tomcat7  
-RUN chmod 755 /etc/init.d/tomcat7  
-  
-# Expose ports.  指定暴露的端口
-EXPOSE 8080  
-  
-# Define default command.  
-ENTRYPOINT service tomcat7 start && tail -f /opt/tomcat7/logs/catalina.out
+FROM debian
+RUN apt update
+RUN DEBIAN_FRONTEND=noninteractive apt install qemu-kvm *zenhei* xz-utils dbus-x11 curl firefox-esr gnome-system-monitor mate-system-monitor  git xfce4 xfce4-terminal tightvncserver wget   -y
+RUN wget https://github.com/novnc/noVNC/archive/refs/tags/v1.2.0.tar.gz
+RUN curl -LO https://proot.gitlab.io/proot/bin/proot
+RUN chmod 755 proot
+RUN mv proot /bin
+RUN tar -xvf v1.2.0.tar.gz
+RUN mkdir  $HOME/.vnc
+RUN echo 'luo' | vncpasswd -f > $HOME/.vnc/passwd
+RUN chmod 600 $HOME/.vnc/passwd
+RUN echo 'whoami ' >>/luo.sh
+RUN echo 'cd ' >>/luo.sh
+RUN echo "su -l -c  'vncserver :2000 -geometry 1280x800' "  >>/luo.sh
+RUN echo 'cd /noVNC-1.2.0' >>/luo.sh
+RUN echo './utils/launch.sh  --vnc localhost:7900 --listen 8900 ' >>/luo.sh
+RUN chmod 755 /luo.sh
+EXPOSE 8900
+CMD  /luo.sh
